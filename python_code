@@ -1,0 +1,30 @@
+import math as m
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import time
+
+def get_PTrho_given_altitude(h):
+    g0 = 32.174         # feet per square seconds, std grav acceleration
+    R = 1716.5          # feet square per second square per deg Rankine, specific gas constant of air
+    P1 = 2116.22        # pounds per square feet, pressure at sea level
+    rho1 = 2.3769e-3    # slugs per cubic feet, density at sea level
+    F_to_R = 459.67     # to convert deg Fahrenheit to deg Rankine, R = F + 459.67
+    
+    if h < 36000 :
+        T1 = 59 + F_to_R                     # CHECKED deg Rankine, Temperature at sea level
+        a = -0.00357                         # deg Rankine per feet, environmental lapse rate
+        T = T1 + a*h                         # deg Rankine, Temperature at h
+        P = P1 * ( T / T1 )**(-1*g0/(R*a))              # pounds per square feet, Pressure at h
+        rho = rho1 * ( T / T1 )**(-1*(g0/(R*a) + 1))    # slug per cubic fe   et, Density at h
+    
+    elif h >= 36000 and h < 82000 :          # isotherml region of stratosphere
+        h1 = 36000                           # feet, altitude at tropopause
+        P1 = 474.59                          # pounds per square feet, pressure at 36000 feet
+        rho1 = 70864e-4                      # slugs per cubic feet, density at 36000 feet
+        T = -69.7 + F_to_R                   # deg Rankine, Temperature at 36000 feet
+        P = P1 * m.e**(-1*g0*(h - h1)/(R*T))        # pounds per square feet, Pressure at h
+        rho = rho1 * m.e**(-1*g0*(h - h1)/(R*T))    # slug per feet cube, Density at h
+    
+    return [P, T - F_to_R, rho]     #return Pressure in lb/ft2, Temperature in degF and Density in slugs/ft3
+        
