@@ -1,0 +1,83 @@
+#import packages
+import math as m
+import pandas as pd
+import matplotlib.pyplot as plt
+
+#custom functions
+
+#custom function 1: to get P, T, rho given h
+def get_PTrho_given_altitude(h,g0,R,P_sl,rho_sl,F_to_R,a,T_sl,T_trop,P_trop,rho_trop):
+    if h < 36000 :
+        T1 = T_sl + F_to_R                           # deg Rankine, Temperature at sea level
+        T = T1 + a*h                                 # deg Rankine, Temperature at h
+        P = P_sl * ( T / T1 )**(-1*g0/(R*a))              # pounds per square feet, Pressure at h
+        rho = rho_sl * ( T / T1 )**(-1*(g0/(R*a) + 1))    # slug per cubic fe   et, Density at h
+    
+    elif h >= 36000 and h < 82000 :          # isotherml region of stratosphere
+        h0 = 36000                           # feet, altitude at tropopause
+        T = T_trop + F_to_R                   # deg Rankine, Temperature at 36000 feet
+        P = P_trop * m.e**(-1*g0*(h - h0)/(R*T))        # pounds per square feet, Pressure at h
+        rho = rho_trop * m.e**(-1*g0*(h - h0)/(R*T))    # slug per feet cube, Density at h
+    
+    return [P, T - F_to_R, rho]     #return Pressure in lb/ft2, Temperature in degF and Density in slugs/ft3
+
+#custom function 2: to get Vstall given h
+def get_Vstall_given_altitude(h,W,C_Lmax,S,g0,R,P_sl,rho_sl,F_to_R,a,T_sl,T_trop,P_trop,rho_trop):
+    rho_slug = get_PTrho_given_altitude(h,g0,R,P_sl,rho_sl,F_to_R,a,T_sl,T_trop,P_trop,rho_trop)[2]
+    rho_lb = slug_to_lb * rho_slug
+    #print(rho_lb)
+    Vstall = (2*W/(rho_lb*S*C_Lmax))**0.5
+    return Vstall
+
+#parameters and constants
+g0 = 32.174           # feet per square seconds, std grav acceleration
+R = 1716.5            # feet square per second square per deg Rankine, specific gas constant of air
+F_to_R = 459.67       # to convert deg Fahrenheit to deg Rankine, R = F + 459.67
+a = -0.00357          # deg Rankine per feet, environmental lapse rate
+P_sl = 2116.22        # pounds per square feet, pressure at sea level
+rho_sl = 2.3769e-3    # slugs per cubic feet, density at sea level
+T_sl = 59             # deg Fahrenheit, Temperature at sea level
+T_trop = -70.68       # deg Fahrenheit, Temperature at 36000 feet
+P_trop = 474.59       # pounds per square feet, pressure at 36000 feet
+rho_trop = 7.0864e-4  # slugs per cubic feet, density at 36000 feet
+
+W = 2400                # pounds, Weight of aircraft (Piper Cherokee 180)
+S = 157.5               # feet square, Wing reference area of aircraft
+C_Lmax = 1.9            # dimensionless, Maximum Lift Coefficient
+slug_to_lb = 32.174     # 1 slug = 32.174 pounds
+
+# Computing Vstall at different Altitudes:
+Vstall_list = []
+h_list = [999, 12345, 24242, 36987, 74123]
+for h in h_list:
+    Vstall_list.append(get_Vstall_given_altitude(h,W,C_Lmax,S,g0,R,P_sl,rho_sl,F_to_R,a,T_sl,T_trop,P_trop,rho_trop))
+Vstall_df = pd.DataFrame(Vstall_list, columns = ["Vstall / ft.s-1"])
+Vstall_df.insert(0, "h/feet", h_list)
+print(Vstall_df)
+
+"""
+OUTPUT:
+   h/feet  Vstall / ft.s-1
+0     999        14.696499
+1   12345        17.490565
+2   24242        21.346818
+3   36987        27.162245
+4   74123        66.456632
+
+""""
+
+#Plotting Vstall versus Altitude:
+x = Vstall_df["h/feet"]
+y = Vstall_df["Vstall / ft.s-1"]
+plt.plot(x,y, marker = "*")
+plt.xlabel("Altitude / feet")
+plt.ylabel("Stall Speed / ft.s-1")
+plt.title("Stall Speed vs Altitude for Piper Cherokee 180 using Std Model of Dry Air", fontsize = 10)
+plt.xticks(np.arange(0, 80000, step=10000))
+plt.yticks(np.arange(0,71, step = 5))
+plt.show()
+
+
+
+
+
