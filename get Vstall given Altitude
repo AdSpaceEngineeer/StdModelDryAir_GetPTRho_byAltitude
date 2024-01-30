@@ -55,16 +55,6 @@ Vstall_df = pd.DataFrame(Vstall_list, columns = ["Vstall / ft.s-1"])
 Vstall_df.insert(0, "h/feet", h_list)
 print(Vstall_df)
 
-"""
-OUTPUT:
-   h/feet  Vstall / ft.s-1
-0     999        14.696499
-1   12345        17.490565
-2   24242        21.346818
-3   36987        27.162245
-4   74123        66.456632
-
-""""
 
 #Plotting Vstall versus Altitude:
 x = Vstall_df["h/feet"]
