@@ -1,7 +1,7 @@
 PTrho_list = []
 h_list = [999, 12345, 24242, 36987, 74123]
 for h in h_list:
-    PTrho_list.append(get_PTrho_given_altitude(h))
+    PTrho_list.append(get_PTrho_given_altitude(h,g0,R,P_sl,rho_sl,F_to_R,a,T_sl,T_trop,P_trop,rho_trop))
 PTrho_df = pd.DataFrame(PTrho_list, columns = ["P/lb.ft-2", "Temp / degF", "rho/slug.ft-3"])
 PTrho_df.insert(0, "h/ feet", h_list)
 print(PTrho_df)
