@@ -24,9 +24,9 @@ def get_PTrho_given_altitude(h,g0,R,P_sl,rho_sl,F_to_R,a,T_sl,T_trop,P_trop,rho_
 #custom function 2: to get Vstall given h
 def get_Vstall_given_altitude(h,W,C_Lmax,S,g0,R,P_sl,rho_sl,F_to_R,a,T_sl,T_trop,P_trop,rho_trop):
     rho_slug = get_PTrho_given_altitude(h,g0,R,P_sl,rho_sl,F_to_R,a,T_sl,T_trop,P_trop,rho_trop)[2]
-    rho_lb = slug_to_lb * rho_slug
-    #print(rho_lb)
-    Vstall = (2*W/(rho_lb*S*C_Lmax))**0.5
+    #THIS IS WRONG: DO NOT CONVERT RHO_SLUG TO RHO_LB : rho_lb = slug_to_lb * rho_slug
+    #THIS IS WRONG: DO NOT CONVERT RHO_SLUG TO RHO_LB : Vstall = (2*W/(rho_lb*S*C_Lmax))**0.5    
+    Vstall = (2*W/(rho_slug*S*C_Lmax))**0.5
     return Vstall
 
 #parameters and constants
