@@ -1,0 +1,127 @@
+# This code models Mars atmosphere to get P, T, rho and sound_speed given altitude h
+
+#import packages
+import math as m
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# custom function - Mars atmosphere model to get P, T, rho given h
+
+h0 = 0            # feet, ground level
+g = 12.2         # feet per square seconds, std grav acceleration
+R = 1147          # feet square per second square per deg Rankine, specific gas constant of Mars air
+gamma_mars = 1.29   # specific heat ratio of Mars air
+a1 = -0.000548        # deg Fahrenheit per feet, environmental lapse rate up to 22960 feet
+a2 = -0.001217      # deg Fahrenheit per feet, environmental lapse rate beyond 22960 feet
+h_up = 22960      # feet, altitude where environmental lapse rate changes from 'a1' to 'a2'
+P0 = 14.62        # pounds per square feet, pressure at Mars ground level
+T0 = -25.68           # deg Fahrenheit, Temperature at Mars ground level
+rho0 = 2.937e-5     # slug per feet cube, Density at Mars ground level
+P22 = 8.2615        # pounds per square feet, base pressure at Mars altitude 22960 ft
+T22 = -38.2566      # deg Fahrenheit, base Temperature at Mars altitude 22960 ft
+#rho22 = 1.709e-5    # slug per feet cube, base Density at Mars altitude 22960 ft
+F_to_R = 459.67     # to convert deg Fahrenheit to deg Rankine, R = F + 459.67
+
+def Mars_GetPTrhoSoundSpeed_given_h(h,h0,h_up,g,R,F_to_R,a1,a2,P0,T0,gamma_mars,P22,T22):
+    if h <= h_up:
+        T = T0 + a1 * (h - h0)              
+        P = P0 * ((T + F_to_R) / (T0 + F_to_R))**(-g/(R*a1))
+        rho = P / (R * (T + F_to_R))
+        sound_speed = (gamma_mars * P / rho)**0.5
+
+    elif h > h_up:
+        T = T22 + a2 * (h - h_up)             
+        P = P22 * ((T + F_to_R) / (T22 + F_to_R))**(-g/(R*a2))  
+        rho = P / (R * (T + F_to_R))
+        sound_speed = (gamma_mars * P / rho)**0.5
+    
+    return [P, T, rho, sound_speed]     
+    #returns Pressure in lb/ft2, Temperature in degF, Density in slugs/ft3 and Sound of Speed in ft/s
+
+# BASIC EQUATIONS
+  # Temp = T0 + a * (h - h0)
+  # Pressure = P0 * (T / T0)^(-g/(R*a))
+  # Density = rho = P / (R * (T + F_to_R))
+rho0 = P0 / (R * (T0 + F_to_R)) ; print("Ground density Mars 'rho0' / slug.ft-3 :", rho0)
+  # speed of sounds = sqrt( gamma * P / rho)
+
+#Mars glider specifications
+CLmax = 1.8     # max lift coefficient
+W = 5000        # lbs, weight of glider
+S = 500         # ft^2, planform area of glider
+
+# generate h, P, T and rho datasets:
+
+h_mars_list = [h for h in range(0, 35050, 500)]
+P_mars_list = []
+T_mars_list = []
+rho_mars_list = []
+for h in h_mars_list:
+    P,T,rho,speed_sound = Mars_GetPTrhoSoundSpeed_given_h(h,h0,h_up,g,R,F_to_R,a1,a2,P0,T0,gamma_mars,P22,T22)
+    P_mars_list.append(P)
+    T_mars_list.append(T)
+    rho_mars_list.append(rho)
+
+#create Pressure plot
+
+plt.figure(figsize=(5, 5))
+plt.plot(P_mars_list, h_mars_list, color = 'blue')
+plt.xlabel("Pressure / lb.ft-2")
+plt.ylabel("Altitude / ft")
+plt.title("Pressure vs Altitude for Mars Atmosphere", fontsize = 12)
+plt.ylim(0, 35500)
+plt.show()
+
+#create Temp plot
+
+plt.figure(figsize=(5, 5))
+plt.plot(T_mars_list, h_mars_list, color = 'red')
+plt.xlabel("Temperature / deg F")
+plt.ylabel("Altitude / ft")
+plt.title("Temperature vs Altitude for Mars Atmosphere", fontsize = 12)
+plt.ylim(0, 35500)
+plt.show()
+
+#create Density plot
+
+plt.figure(figsize=(5, 5))
+plt.plot(rho_mars_list, h_mars_list, color = 'green')
+plt.xlabel("Density / slug.ft-3")
+plt.ylabel("Altitude / ft")
+plt.title("Density vs Altitude for Mars Atmosphere", fontsize = 12)
+plt.ylim(0, 35500)
+plt.show()
+
+# Compute stall speed and speed of sound at different altitudes to assess feasibility of stable flight
+
+# At Mars Ground Level 'h0':
+  #density:
+rho_0 = Mars_GetPTrhoSoundSpeed_given_h(h0,h0,h_up,g,R,F_to_R,a1,a2,P0,T0,gamma_mars,P22,T22)[2]
+print("Density at Mars ground level / slug.ft-3 :", rho_0)
+  #stall speed:
+Vstall_0 = (2*W/(rho_0 * S * CLmax))**0.5
+print("Stall speed at Mars ground level / ft.s-1 :", Vstall_0)
+  #pressure:
+P_0 = Mars_GetPTrhoSoundSpeed_given_h(h0,h0,h_up,g,R,F_to_R,a1,a2,P0,T0,gamma_mars,P22,T22)[0]
+print("Pressure at at Mars ground level / lbf.ft-2 :",P_0)
+  #sound speed:
+sound_speed_0 = (gamma_mars*P0/rho_0)**0.5
+print("Speed of sound at ground level / ft.s-1 :", sound_speed_0)
+
+print("\n")
+
+# At Mars altitude 30,000 ft
+h3 = 30000
+  #density:
+rho_30 = Mars_GetPTrhoSoundSpeed_given_h(h3,h0,h_up,g,R,F_to_R,a1,a2,P0,T0,gamma_mars,P22,T22)[2]
+print("Density at 30K feet altitude / slug.ft-3 :", rho_30)
+  #stall speed:
+Vstall_30 = (2*W/(rho_30 * S * CLmax))**0.5
+print("Stall speed at 30K ft altitude / ft.s-1 :", Vstall_30)
+  #pressure:
+P_30 = Mars_GetPTrhoSoundSpeed_given_h(h3,h0,h_up,g,R,F_to_R,a1,a2,P0,T0,gamma_mars,P22,T22)[0]
+print("Pressure at 30K feet altitude / lbf.ft-2:",P_30)
+  #sound speed:
+sound_speed_30 = (gamma_mars*P_30/rho_30)**0.5
+print("Speed of sound at at 30K feet altitude / ft.s-1 :", sound_speed_30)
